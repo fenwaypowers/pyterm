@@ -12,7 +12,7 @@ def savedata(file: str, data: dict):
   with open(file, 'w') as f:  # open file
     f.write(dumpData)  # write the new json
 
-if os.path.exists('.flscrn.json') != True:
+if os.path.exists('.flscrn.json') == False:
     flscrn = {'flscrn': ["nano", "top", "cmatrix", "vim", "htop", "lynx"]}
     subprocess.run("touch .flscrn.json", shell=True)
     savedata(".flscrn.json", flscrn)

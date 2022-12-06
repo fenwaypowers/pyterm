@@ -1,7 +1,7 @@
 # pyterm
 pyterm is a "virtual terminal" that runs inside of Python. It works by getting user input and then passing it to a subprocess.
 
-This is intended for use with terminals that may not display a modern linux terminal correctly. In my case, my goal was to have this work with an old Wyse WY-50 terminal that doesn't have VT-100 emulation, making it difficult to run a modern linux terminal on it. There are many visual glitches, but this python script hides those glitches.
+This is intended for use with terminals that may not display a modern linux terminal correctly. In my case, my goal was to have this work with an old Wyse WY-50 terminal that doesn't have VT-100 emulation, making it difficult to run a modern linux terminal on it. There are many visual glitches, but this python script attempts to hide those glitches.
 
 ## Prerequisites: 
 

@@ -96,10 +96,15 @@ def history_logic(command: str, history: list, flscrn: dict):
         if command != "history run":
             command = command.split(" ")[2]
             if command.isdigit():
-                command = history[int(command)]
+                if int(command) in range(0, len(history)):
+                    command = history[int(command)]
+                else:
+                    command = "none"
             elif command == "last":
                 command = history[-1]
-            history, flscrn = term_process(command, history, flscrn)
+
+            if command != "none":
+                history, flscrn = term_process(command, history, flscrn)
     else:
         if command != "history":
             if ":" in command:
@@ -160,7 +165,7 @@ def savedata(file: str, data: dict):
     f.write(dumpData)  # write the new json
 
 if os.path.exists('.flscrn.json') == False:
-    flscrn = {'flscrn': ["nano", "top", "cmatrix", "vim", "htop", "lynx"]}
+    flscrn = {'flscrn': ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]}
     subprocess.run("touch .flscrn.json", shell=True)
     savedata(".flscrn.json", flscrn)
 

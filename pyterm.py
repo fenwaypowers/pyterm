@@ -132,6 +132,9 @@ def term_process(command: str, history: list, flscrn: dict):
     if command.startswith("cd"):
         history.append(command)
         change_directory(command)
+    
+    elif command.startswith("whoami"):
+        print(pwd.getpwuid(os.getuid())[0] + " (on PyTerm)")
 
     elif command.startswith("history"):
         history, flscrn = history_logic(command, history, flscrn)

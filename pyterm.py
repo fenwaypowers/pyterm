@@ -1,202 +1,151 @@
 import subprocess
 import os
-import pwd
+import getpass
 import socket
 import json
 import sys
 import psutil
 import platform
+import argparse
 from datetime import datetime
 
-#print("-----------------\nYou have started the virtual terminal.\n-----------------")
+# --- Argument Parsing ---
+parser = argparse.ArgumentParser(description="PyTerm - A virtual terminal emulator.")
+parser.add_argument("--no-fullscreen", action="store_true", help="Disable fullscreen clear on specified commands.")
+parser.add_argument("--og-neofetch", action="store_true", help="Use original neofetch output.")
+args = parser.parse_args()
 
+fullscreen_esc = not args.no_fullscreen
+new_neofetch = not args.og_neofetch
+
+# --- Setup ---
 original_dir = os.getcwd()
-fullscreen_esc = True
-new_neofetch = True
+username = getpass.getuser()
+home_dir = os.path.expanduser("~")
+flscrn_file = os.path.join(original_dir, ".flscrn.json")
 
-def bytes_to_MB(bytes):
-    mb = bytes/(1024*1024)
-    mb = int(mb)
-    return str(mb)
+def bytes_to_MB(bytes_val):
+    return str(int(bytes_val / (1024 * 1024)))
 
 def neofetch():
     print()
-    print(pwd.getpwuid(os.getuid())[0] + "@" + platform.node())
+    print(f"{username}@{platform.node()}")
     print("---------------")
+    print(f"[+] OS     : {platform.system()} {platform.machine()}")
+    print(f"[+] Kernel : {platform.release()}")
 
-    # prints the currently using system name
-    print("[+] OS :", platform.system() + " " + platform.machine())
-
-    # printing the Operating System release information
-    print("[+] Kernel :", platform.release())
-
-    # getting thesystem up time from the uptime file at proc directory
     with open("/proc/uptime", "r") as f:
-        uptime = f.read().split(" ")[0].strip()
+        uptime = int(float(f.read().split(" ")[0].strip()))
+        print(f"[+] Uptime : {uptime // 60} mins")
 
-    uptime = int(float(uptime))
-    uptime_minutes = uptime // 60
-    print("[+] Uptime : " + str(uptime_minutes) + " mins")
-
-    # reading the cpuinfo file to print the name of
-    # the CPU present
     with open("/proc/cpuinfo", "r") as f:
         file_info = f.readlines()
-
     cpuinfo = [x.strip().split(":")[1] for x in file_info if "model name" in x]
+    if cpuinfo:
+        item = cpuinfo[0].split("@")
+        cpu_str = item[0].strip()
+        if len(item) > 1:
+            cpu_str += f" ({psutil.cpu_count(logical=True)}) @ {item[1].strip()}"
+        print(f"[+] CPU    : {cpu_str}")
 
-    for index, item in enumerate(cpuinfo):
-        if index == 0:
-            item = item.split("@")
-            if len(item) < 2:
-                print("[+] CPU :" + item[0])
-            else:
-                print("[+] CPU :" + item[0] + "(" +
-                      str(psutil.cpu_count(logical=True)) + ") " + "@" + item[1])
+    mem = psutil.virtual_memory()
+    print(f"[+] Memory : {bytes_to_MB(mem.used)} MiB / {bytes_to_MB(mem.total)} MiB\n")
 
-    # Using the virtual_memory() function it will return a tuple
-    virtual_memory = psutil.virtual_memory()
-
-    #This will print the primary memory details
-    print("[+] Memory :",  bytes_to_MB(virtual_memory.used)
-          + "Mib", "/", bytes_to_MB(virtual_memory.total) + "Mib")
-
-    print()
-
-def change_directory(command: str):
+def change_directory(command, *_):
     try:
-        dir = command[3:]
+        path = command.strip()[3:].strip().strip('\'"')
+        path = os.path.expanduser(path)
+        os.chdir(path)
+    except Exception as e:
+        print(f"Failed to change directory: {e}")
 
-        if "\"" in command[3:]:
-            dir = dir.split("\"")[1]
-        elif "\'" in command[3:]:
-            dir = dir.split("\'")[1]
+def do_whoami(command, *_):
+    print(f"{username} (on PyTerm)")
 
-        if "~" in dir:
-            split = dir.split("~")
-            dir = ""
-            for l in range(0, len(split)):
-                dir += split[l]
-                if l < len(split)-1:
-                    dir += "/home/" + pwd.getpwuid(os.getuid())[0]
-
-        os.chdir(dir)
-    except:
-        pass
-
-def history_logic(command: str, history: list, flscrn: dict):
-    length = len(history)
-    if length > 20:
-        length = 20
-    start = 0
-
+def history_logic(command, history, flscrn):
     if command.startswith("history run"):
-        if command != "history run":
-            command = command.split(" ")[2]
-            if command.isdigit():
-                if int(command) in range(0, len(history)):
-                    command = history[int(command)]
-                else:
-                    command = "none"
-            elif command == "last":
-                command = history[-1]
-
-            if command != "none":
-                history, flscrn = term_process(command, history, flscrn)
-    else:
-        if command != "history":
-            if ":" in command:
-                args = command.split(" ")[1]
-                args = args.split(":")
-                if args[0].isdigit() and args[1].isdigit():
-                    start = int(args[0])
-                    length = int(args[1])+1
+        parts = command.split()
+        if len(parts) >= 3:
+            index = parts[2]
+            if index == "last":
+                run_cmd = history[-1]
+            elif index.isdigit() and int(index) < len(history):
+                run_cmd = history[int(index)]
             else:
-                arg = command.split(" ")[1]
-                if arg.isdigit():
-                    if int(arg) < length:
-                        start = length - int(arg)
-                elif "-" in arg and arg.split("-")[1].isdigit():
-                    if int(arg.split("-")[1]) < length:
-                        length = int(arg.split("-")[1])
-
-        for i in range(start, length):
-            print(" ", i, history[i])
-    
+                print("Invalid history index.")
+                return history, flscrn
+            history, flscrn = term_process(run_cmd, history, flscrn)
+    else:
+        max_items = 20
+        items = history[-max_items:]
+        for i, cmd in enumerate(items):
+            print(f" {len(history) - len(items) + i}: {cmd}")
     return history, flscrn
 
-def term_process(command: str, history: list, flscrn: dict):
+def add_flscrn(command, history, flscrn):
+    parts = command.split()
+    if len(parts) >= 2:
+        flscrn['flscrn'].append(parts[1])
+        savedata(flscrn_file, flscrn)
 
-    if command.startswith("cd"):
-        history.append(command)
-        change_directory(command)
-    
-    elif command.startswith("whoami"):
-        print(pwd.getpwuid(os.getuid())[0] + " (on PyTerm)")
+def savedata(file, data):
+    try:
+        with open(file, 'w') as f:
+            json.dump(data, f)
+    except Exception as e:
+        print(f"Failed to save data: {e}")
 
-    elif command.startswith("history"):
-        history, flscrn = history_logic(command, history, flscrn)
+def term_process(command, history, flscrn):
+    cmd_name = command.strip().split()[0]
 
-    elif command.startswith("add-flscrn"):
-        flscrn_list = flscrn['flscrn']
-        flscrn_list.append(command.split(" ")[1])
-        flscrn['flscrn'] = flscrn_list
+    COMMANDS = {
+        "cd": change_directory,
+        "whoami": do_whoami,
+        "history": history_logic,
+        "add-flscrn": add_flscrn,
+        "neofetch": lambda *args: neofetch() if new_neofetch else None,
+    }
 
-        savedata(original_dir + "/" + ".flscrn.json", flscrn)
-    elif command.startswith("neofetch") and new_neofetch == True:
-        history.append(command)
-        neofetch()
+    if cmd_name in COMMANDS:
+        COMMANDS[cmd_name](command, history, flscrn)
+        if cmd_name != "history":  # avoid double-saving history
+            history.append(command)
     else:
         try:
             subprocess.run(command, shell=True)
             history.append(command)
-        except:
-            print("For some reason the command didn't work. Sorry about that.")
+        except Exception as e:
+            print(f"Command failed: {e}")
 
-    if command.split(" ")[0] in flscrn['flscrn'] and fullscreen_esc == True:
-        subprocess.run("clear", shell=True)
+    if cmd_name in flscrn['flscrn'] and fullscreen_esc:
+        subprocess.run("cls" if os.name == "nt" else "clear", shell=True)
 
     return history, flscrn
 
-def savedata(file: str, data: dict):
-  "removes old file and then replaces it with fresh data @tpowell11"
-  os.remove(file)  # delete outdated data
-  dumpData = json.dumps(data)
-  with open(file, 'w') as f:  # open file
-    f.write(dumpData)  # write the new json
-
-if os.path.exists('.flscrn.json') == False:
+# --- Init flscrn ---
+if not os.path.exists(flscrn_file):
     flscrn = {'flscrn': ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]}
-    subprocess.run("touch .flscrn.json", shell=True)
-    savedata(".flscrn.json", flscrn)
-
-with open('.flscrn.json', 'r') as myfile:
-  data = myfile.read()
-  flscrn = json.loads(data)  # global file open
-
-for i in sys.argv:
-    if i == "--no-fullscreen":
-        fullscreen_esc = False
-    elif i == "--og-neofetch":
-        new_neofetch = False
+    savedata(flscrn_file, flscrn)
+else:
+    with open(flscrn_file, 'r') as f:
+        flscrn = json.load(f)
 
 history = []
 
-if fullscreen_esc == True:
-    subprocess.run("clear", shell=True)
+if fullscreen_esc:
+    subprocess.run("cls" if os.name == "nt" else "clear", shell=True)
 
 while True:
-    pretty_print_dir = os.getcwd()
-    if os.getcwd().startswith("/home/" + pwd.getpwuid(os.getuid())[0]):
-        pretty_print_dir = "~" + \
-            str(os.getcwd())[len("/home/" + pwd.getpwuid(os.getuid())[0]):]
-
-    command = input(pwd.getpwuid(os.getuid())[
-                    0] + "@" + socket.gethostname() + ":" + pretty_print_dir + "$ ")
-    
-    if command == "exit":
+    try:
+        cwd = os.getcwd()
+        display_path = cwd.replace(home_dir, "~") if cwd.startswith(home_dir) else cwd
+        command = input(f"{username}@{socket.gethostname()}:{display_path}$ ").strip()
+        if command == "exit":
+            break
+        if command:
+            history, flscrn = term_process(command, history, flscrn)
+    except (KeyboardInterrupt, EOFError):
+        print("\nExiting PyTerm.")
         break
-
-    history, flscrn = term_process(command, history, flscrn)
 
 print("-----------------\nYou are no longer in the virtual terminal.\n-----------------")

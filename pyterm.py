@@ -3,11 +3,9 @@ import os
 import getpass
 import socket
 import json
-import sys
 import psutil
 import platform
 import argparse
-from datetime import datetime
 
 # --- Argument Parsing ---
 parser = argparse.ArgumentParser(description="PyTerm - A virtual terminal emulator.")
@@ -175,12 +173,13 @@ def main():
                 break
             if command:
                 history, flscrn = term_process(command, history, flscrn)
-        except (KeyboardInterrupt, EOFError):
-            print("\nExiting PyTerm.")
-            break
+        except KeyboardInterrupt:
+            print()  # Move to a new line on Ctrl+C (do nothing else)
+        except EOFError:
+            break  # Exit on Ctrl+D
 
     print(
-        "-----------------\nYou are no longer in the virtual terminal.\n-----------------"
+        "\n-----------------\nYou are no longer in the virtual terminal.\n-----------------"
     )
 
 

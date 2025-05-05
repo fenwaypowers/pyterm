@@ -11,8 +11,14 @@ from datetime import datetime
 
 # --- Argument Parsing ---
 parser = argparse.ArgumentParser(description="PyTerm - A virtual terminal emulator.")
-parser.add_argument("--no-fullscreen", action="store_true", help="Disable fullscreen clear on specified commands.")
-parser.add_argument("--og-neofetch", action="store_true", help="Use original neofetch output.")
+parser.add_argument(
+    "--no-fullscreen",
+    action="store_true",
+    help="Disable fullscreen clear on specified commands.",
+)
+parser.add_argument(
+    "--og-neofetch", action="store_true", help="Use original neofetch output."
+)
 args = parser.parse_args()
 
 fullscreen_esc = not args.no_fullscreen
@@ -24,8 +30,10 @@ username = getpass.getuser()
 home_dir = os.path.expanduser("~")
 flscrn_file = os.path.join(original_dir, ".flscrn.json")
 
+
 def bytes_to_MB(bytes_val):
     return str(int(bytes_val / (1024 * 1024)))
+
 
 def neofetch():
     print()
@@ -51,16 +59,19 @@ def neofetch():
     mem = psutil.virtual_memory()
     print(f"[+] Memory : {bytes_to_MB(mem.used)} MiB / {bytes_to_MB(mem.total)} MiB\n")
 
+
 def change_directory(command, *_):
     try:
-        path = command.strip()[3:].strip().strip('\'"')
+        path = command.strip()[3:].strip().strip("'\"")
         path = os.path.expanduser(path)
         os.chdir(path)
     except Exception as e:
         print(f"Failed to change directory: {e}")
 
+
 def do_whoami(command, *_):
     print(f"{username} (on PyTerm)")
+
 
 def history_logic(command, history, flscrn):
     if command.startswith("history run"):
@@ -82,18 +93,21 @@ def history_logic(command, history, flscrn):
             print(f" {len(history) - len(items) + i}: {cmd}")
     return history, flscrn
 
+
 def add_flscrn(command, history, flscrn):
     parts = command.split()
     if len(parts) >= 2:
-        flscrn['flscrn'].append(parts[1])
+        flscrn["flscrn"].append(parts[1])
         savedata(flscrn_file, flscrn)
+
 
 def savedata(file, data):
     try:
-        with open(file, 'w') as f:
+        with open(file, "w") as f:
             json.dump(data, f)
     except Exception as e:
         print(f"Failed to save data: {e}")
+
 
 def term_process(command, history, flscrn):
     cmd_name = command.strip().split()[0]
@@ -117,17 +131,20 @@ def term_process(command, history, flscrn):
         except Exception as e:
             print(f"Command failed: {e}")
 
-    if cmd_name in flscrn['flscrn'] and fullscreen_esc:
+    if cmd_name in flscrn["flscrn"] and fullscreen_esc:
         subprocess.run("cls" if os.name == "nt" else "clear", shell=True)
 
     return history, flscrn
 
+
 # --- Init flscrn ---
 if not os.path.exists(flscrn_file):
-    flscrn = {'flscrn': ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]}
+    flscrn = {
+        "flscrn": ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]
+    }
     savedata(flscrn_file, flscrn)
 else:
-    with open(flscrn_file, 'r') as f:
+    with open(flscrn_file, "r") as f:
         flscrn = json.load(f)
 
 history = []
@@ -148,4 +165,6 @@ while True:
         print("\nExiting PyTerm.")
         break
 
-print("-----------------\nYou are no longer in the virtual terminal.\n-----------------")
+print(
+    "-----------------\nYou are no longer in the virtual terminal.\n-----------------"
+)

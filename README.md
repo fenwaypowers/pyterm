@@ -6,9 +6,12 @@ This is intended for use with terminals that may not display a modern linux term
 ## Prerequisites: 
 
 * [Python3](https://www.python.org/)
+* [psutil](https://pypi.org/project/psutil/)
 
 ## Example Use:
 To run, simply execute `python3 pyterm.py`
 
 ## Custom arguments:
-There is one optional argument, which is `--no-fullscreen`. This makes it so that the terminal won't automatically clear after a "fullscreen" application (listed in the `.flscrn.json` file) is run.
+There are two optional argument, one of which is `--no-fullscreen`. This makes it so that the terminal won't automatically clear after a "fullscreen" application (listed in the `.flscrn.json` file) is run.
+
+The other option is `--og-neofetch`, which disables the built-in "neofetch" command I built to display system information properly on old serial terminals with no visual glitches. 

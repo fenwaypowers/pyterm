@@ -9,12 +9,10 @@ import platform
 from datetime import datetime
 
 #print("-----------------\nYou have started the virtual terminal.\n-----------------")
-subprocess.run("clear", shell=True)
 
 original_dir = os.getcwd()
 fullscreen_esc = True
 new_neofetch = True
-
 
 def bytes_to_MB(bytes):
     mb = bytes/(1024*1024)
@@ -183,6 +181,9 @@ for i in sys.argv:
         new_neofetch = False
 
 history = []
+
+if fullscreen_esc == True:
+    subprocess.run("clear", shell=True)
 
 while True:
     pretty_print_dir = os.getcwd()

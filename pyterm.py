@@ -137,34 +137,52 @@ def term_process(command, history, flscrn):
     return history, flscrn
 
 
-# --- Init flscrn ---
-if not os.path.exists(flscrn_file):
-    flscrn = {
-        "flscrn": ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]
-    }
-    savedata(flscrn_file, flscrn)
-else:
-    with open(flscrn_file, "r") as f:
-        flscrn = json.load(f)
+def main():
+    # --- Init flscrn ---
+    if not os.path.exists(flscrn_file):
+        flscrn = {
+            "flscrn": [
+                "nano",
+                "top",
+                "cmatrix",
+                "vim",
+                "htop",
+                "lynx",
+                "netris",
+                "petris",
+            ]
+        }
+        savedata(flscrn_file, flscrn)
+    else:
+        with open(flscrn_file, "r") as f:
+            flscrn = json.load(f)
 
-history = []
+    history = []
 
-if fullscreen_esc:
-    subprocess.run("cls" if os.name == "nt" else "clear", shell=True)
+    if fullscreen_esc:
+        subprocess.run("cls" if os.name == "nt" else "clear", shell=True)
 
-while True:
-    try:
-        cwd = os.getcwd()
-        display_path = cwd.replace(home_dir, "~") if cwd.startswith(home_dir) else cwd
-        command = input(f"{username}@{socket.gethostname()}:{display_path}$ ").strip()
-        if command == "exit":
+    while True:
+        try:
+            cwd = os.getcwd()
+            display_path = (
+                cwd.replace(home_dir, "~") if cwd.startswith(home_dir) else cwd
+            )
+            command = input(
+                f"{username}@{socket.gethostname()}:{display_path}$ "
+            ).strip()
+            if command == "exit":
+                break
+            if command:
+                history, flscrn = term_process(command, history, flscrn)
+        except (KeyboardInterrupt, EOFError):
+            print("\nExiting PyTerm.")
             break
-        if command:
-            history, flscrn = term_process(command, history, flscrn)
-    except (KeyboardInterrupt, EOFError):
-        print("\nExiting PyTerm.")
-        break
 
-print(
-    "-----------------\nYou are no longer in the virtual terminal.\n-----------------"
-)
+    print(
+        "-----------------\nYou are no longer in the virtual terminal.\n-----------------"
+    )
+
+
+if __name__ == "__main__":
+    main()

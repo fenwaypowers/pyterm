@@ -1,17 +1,48 @@
 # pyterm
-pyterm is a "virtual terminal" that runs inside of Python. It works by getting user input and then passing it to a subprocess.
 
-This is intended for use with terminals that may not display a modern linux terminal correctly. In my case, my goal was to have this work with an old Wyse WY-50 terminal that doesn't have VT-100 emulation, making it difficult to run a modern linux terminal on it. There are many visual glitches, but this python script attempts to hide those glitches.
+**pyterm** is a "virtual terminal" that runs inside Python. It collects user input and executes it via subprocess calls, simulating a simplified shell interface.
 
-## Prerequisites: 
+This tool is especially useful for interacting with serial or legacy terminals that do not support modern terminal emulation. For example, it was designed to work with the **Wyse WY-50**, a terminal lacking VT-100 compatibility, where traditional shells like bash may render incorrectly. PyTerm tries to reduce or hide these visual glitches.
 
-* [Python3](https://www.python.org/)
-* [psutil](https://pypi.org/project/psutil/)
+## Prerequisites
 
-## Example Use:
-To run, simply execute `python3 pyterm.py`
+- [Python 3.10+](https://www.python.org/)
 
-## Custom arguments:
-There are two optional argument, one of which is `--no-fullscreen`. This makes it so that the terminal won't automatically clear after a "fullscreen" application (listed in the `.flscrn.json` file) is run.
+- [psutil](https://pypi.org/project/psutil/)  
+  You can install it with:
+  
+  `pip install psutil`
 
-The other option is `--og-neofetch`, which disables the built-in "neofetch" command I built to display system information properly on old serial terminals with no visual glitches. 
+## Example Usage
+
+Run the program using:
+
+`python pyterm.py`
+
+## Custom Arguments
+
+PyTerm supports two optional command-line arguments:
+
+- `--no-fullscreen`  
+  Disables the automatic screen clearing after running "fullscreen" applications (e.g., `top`, `vim`, `nano`). These are defined in the `.flscrn.json` file.
+
+- `--og-neofetch`  
+  Disables PyTerm's custom `neofetch` output (designed to display cleanly on older terminals) and falls back to no output or a basic stub.
+
+## Features
+
+- Cross-platform (Windows and Unix-like systems)
+
+- Command history and history replay (`history`, `history run <index>`)
+
+- Custom `neofetch` for system info (`neofetch` can cause visual glitches on old terminals)
+
+- Supports adding new fullscreen apps using `add-flscrn <command>`
+
+- Safe directory changes with `cd`
+
+## Notes
+
+- On first run, a `.flscrn.json` file will be created in the current directory to track commands considered fullscreen.
+
+- Compatible with minimal environments; requires no external shell utilities beyond Python itself.

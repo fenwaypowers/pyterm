@@ -1,1 +1,12 @@
-{"flscrn": ["nano", "top", "cmatrix", "vim", "htop", "lynx", "netris", "petris"]}
+{
+    "flscrn": [
+        "nano",
+        "top",
+        "cmatrix",
+        "vim",
+        "htop",
+        "lynx",
+        "netris",
+        "petris"
+    ]
+}

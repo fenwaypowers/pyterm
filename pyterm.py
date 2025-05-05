@@ -68,7 +68,7 @@ def change_directory(command, *_):
 
 
 def do_whoami(command, *_):
-    print(f"{username} (on PyTerm)")
+    print(f"{username}")
 
 
 def history_logic(command, history, flscrn):
@@ -120,7 +120,7 @@ def term_process(command, history, flscrn):
 
     if cmd_name in COMMANDS:
         COMMANDS[cmd_name](command, history, flscrn)
-        if cmd_name != "history":  # avoid double-saving history
+        if cmd_name != "history":
             history.append(command)
     else:
         try:

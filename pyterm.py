@@ -96,15 +96,11 @@ def add_flscrn(command, history, flscrn):
     parts = command.split()
     if len(parts) >= 2:
         flscrn["flscrn"].append(parts[1])
-        savedata(flscrn_file, flscrn)
-
-
-def savedata(file, data):
-    try:
-        with open(file, "w") as f:
-            json.dump(data, f)
-    except Exception as e:
-        print(f"Failed to save data: {e}")
+        try:
+            with open(flscrn_file, "w") as f:
+                json.dump(flscrn, f)
+        except Exception as e:
+            print(f"Failed to update .flscrn.json: {e}")
 
 
 def term_process(command, history, flscrn):
@@ -150,7 +146,11 @@ def main():
                 "petris",
             ]
         }
-        savedata(flscrn_file, flscrn)
+        try:
+            with open(flscrn_file, "w") as f:
+                json.dump(flscrn, f)
+        except Exception as e:
+            print(f"Failed to create .flscrn.json: {e}")
     else:
         with open(flscrn_file, "r") as f:
             flscrn = json.load(f)
@@ -174,9 +174,9 @@ def main():
             if command:
                 history, flscrn = term_process(command, history, flscrn)
         except KeyboardInterrupt:
-            print()  # Move to a new line on Ctrl+C (do nothing else)
+            print()
         except EOFError:
-            break  # Exit on Ctrl+D
+            break
 
     print(
         "\n-----------------\nYou are no longer in the virtual terminal.\n-----------------"
